@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Love Heart ❤️</title>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        overflow: hidden;
+        background: #000;
+        font-family: Arial, sans-serif;
+    }
+
+    canvas {
+        display: block;
+    }
+
+    .title {
+        position: fixed;
+        top: 25px;
+        width: 100%;
+        text-align: center;
+        color: #ff9ed6;
+        font-size: 30px;
+        letter-spacing: 3px;
+        text-shadow:
+            0 0 5px #ff4db8,
+            0 0 15px #ff1493,
+            0 0 30px #ff1493;
+        z-index: 10;
+        pointer-events: none;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="title">I LOVE YOU ❤️</div>
+
+<script type="module">
+
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+
+import { EffectComposer } from
+"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js";
+
+import { RenderPass } from
+"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/RenderPass.js";
+
+import { UnrealBloomPass } from
+"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js";
+
+
+// ==========================================
+// SCENE
+// ==========================================
+
+const scene = new THREE.Scene();
+
+scene.background = new THREE.Color(0x000000);
+
+
+// ==========================================
+// CAMERA
+// ==========================================
+
+const camera = new THREE.PerspectiveCamera(
+    55,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    100
+);
+
+camera.position.set(0, 0, 28);
+
+
+// ==========================================
+// RENDERER
+// ==========================================
+
+const renderer = new THREE.WebGLRenderer({
+    antialias: true
+});
+
+renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio, 2)
+);
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+document.body.appendChild(renderer.domElement);
+
+
+// ==========================================
+// BLOOM / GLOW
+// ==========================================
+
+const composer = new EffectComposer(renderer);
+
+const renderPass = new RenderPass(
+    scene,
+    camera
+);
+
+composer.addPass(renderPass);
+
+
+const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(
+        window.innerWidth,
+        window.innerHeight
+    ),
+    2.5,     // strength
+    0.7,     // radius
+    0.05     // threshold
+);
+
+composer.addPass(bloomPass);
+
+
+// ==========================================
+// HEART GROUP
+// ==========================================
+
+const heartGroup = new THREE.Group();
+
+scene.add(heartGroup);
+
+
+// ==========================================
+// HEART EQUATION
+// ==========================================
+
+function heart(t) {
+
+    const x =
+        16 * Math.pow(Math.sin(t), 3);
+
+    const y =
+        13 * Math.cos(t)
+        - 5 * Math.cos(2 * t)
+        - 2 * Math.cos(3 * t)
+        - Math.cos(4 * t);
+
+    return {
+        x: x,
+        y: y
+    };
+}
+
+
+// ==========================================
+// CREATE TEXT SPRITE
+// ==========================================
+
+function createTextSprite(text, size) {
+
+    const canvas =
+        document.createElement("canvas");
+
+    const ctx =
+        canvas.getContext("2d");
+
+    canvas.width = 512;
+    canvas.height = 128;
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    ctx.font =
+        `bold ${size}px Arial`;
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    // Glow
+    ctx.shadowColor = "#ff1493";
+    ctx.shadowBlur = 25;
+
+    ctx.fillStyle = "#ff9ed6";
+
+    ctx.fillText(
+        text,
+        canvas.width / 2,
+        canvas.height / 2
+    );
+
+    const texture =
+        new THREE.CanvasTexture(canvas);
+
+    texture.needsUpdate = true;
+
+    const material =
+        new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+
+    const sprite =
+        new THREE.Sprite(material);
+
+    sprite.scale.set(
+        2.5,
+        0.63,
+        1
+    );
+
+    return sprite;
+}
+
+
+// ==========================================
+// CREATE HEART TEXT
+// ==========================================
+
+const COUNT = 420;
+
+for (let i = 0; i < COUNT; i++) {
+
+    const t =
+        (i / COUNT) *
+        Math.PI * 2;
+
+    const base =
+        heart(t);
+
+
+    // Depth creates the 3D effect
+    const z =
+        (Math.random() - 0.5) * 7;
+
+
+    // Small random spread
+    const spread =
+        0.25 + Math.random() * 0.35;
+
+
+    const x =
+        base.x * 0.55 +
+        (Math.random() - 0.5) * spread;
+
+
+    const y =
+        base.y * 0.55 +
+        (Math.random() - 0.5) * spread;
+
+
+    const sprite =
+        createTextSprite(
+            "I love you",
+            42 + Math.random() * 18
+        );
+
+
+    sprite.position.set(
+        x,
+        y,
+        z
+    );
+
+
+    // Different sizes
+    const scale =
+        0.35 + Math.random() * 0.65;
+
+    sprite.scale.multiplyScalar(
+        scale
+    );
+
+
+    // Store animation data
+    sprite.userData = {
+
+        angle: t,
+
+        radius:
+            Math.sqrt(x * x + y * y),
+
+        speed:
+            0.0005 +
+            Math.random() * 0.001,
+
+        originalZ: z,
+
+        phase:
+            Math.random() * Math.PI * 2
+    };
+
+
+    heartGroup.add(sprite);
+}
+
+
+// ==========================================
+// EXTRA PARTICLES
+// ==========================================
+
+const particleGeometry =
+    new THREE.BufferGeometry();
+
+const particleCount = 700;
+
+const positions =
+    new Float32Array(
+        particleCount * 3
+    );
+
+
+for (let i = 0; i < particleCount; i++) {
+
+    positions[i * 3] =
+        (Math.random() - 0.5) * 35;
+
+    positions[i * 3 + 1] =
+        (Math.random() - 0.5) * 25;
+
+    positions[i * 3 + 2] =
+        (Math.random() - 0.5) * 25;
+}
+
+
+particleGeometry.setAttribute(
+    "position",
+    new THREE.BufferAttribute(
+        positions,
+        3
+    )
+);
+
+
+const particleMaterial =
+    new THREE.PointsMaterial({
+
+        color: 0xff4db8,
+
+        size: 0.07,
+
+        transparent: true,
+
+        opacity: 0.8,
+
+        blending:
+            THREE.AdditiveBlending
+    });
+
+
+const particles =
+    new THREE.Points(
+        particleGeometry,
+        particleMaterial
+    );
+
+
+scene.add(particles);
+
+
+// ==========================================
+// ANIMATION
+// ==========================================
+
+const clock =
+    new THREE.Clock();
+
+
+function animate() {
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    const time =
+        clock.getElapsedTime();
+
+
+    // -------------------------------
+    // HEART ROTATION
+    // -------------------------------
+
+    heartGroup.rotation.y =
+        Math.sin(time * 0.45) * 0.55;
+
+    heartGroup.rotation.x =
+        Math.sin(time * 0.3) * 0.15;
+
+
+    heartGroup.rotation.z =
+        Math.sin(time * 0.2) * 0.08;
+
+
+    // -------------------------------
+    // INSIDE → OUTSIDE MOVEMENT
+    // -------------------------------
+
+    heartGroup.children.forEach(
+        (sprite, i) => {
+
+            const data =
+                sprite.userData;
+
+
+            const movement =
+                (time *
+                data.speed *
+                18 +
+                data.phase) %
+                1;
+
+
+            // Spiral movement
+            const spiral =
+                Math.sin(
+                    movement *
+                    Math.PI * 2
+                ) * 0.8;
+
+
+            sprite.position.z =
+                data.originalZ +
+                spiral;
+
+
+            // Breathing effect
+            const pulse =
+                1 +
+                Math.sin(
+                    time * 2 +
+                    i * 0.05
+                ) * 0.08;
+
+
+            sprite.scale.x =
+                sprite.scale.x *
+                0.995 +
+                sprite.scale.x *
+                0.005 *
+                pulse;
+
+        }
+    );
+
+
+    // -------------------------------
+    // FLOATING PARTICLES
+    // -------------------------------
+
+    particles.rotation.y =
+        time * 0.015;
+
+    particles.rotation.x =
+        Math.sin(time * 0.1) * 0.1;
+
+
+    // -------------------------------
+    // CAMERA BREATHING
+    // -------------------------------
+
+    camera.position.z =
+        28 +
+        Math.sin(time * 0.7) * 1.2;
+
+
+    camera.lookAt(
+        0,
+        0,
+        0
+    );
+
+
+    // Render
+    composer.render();
+}
+
+
+animate();
+
+
+// ==========================================
+// RESPONSIVE
+// ==========================================
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+        composer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+    }
+);
+
+</script>
+
+</body>
+</html>
